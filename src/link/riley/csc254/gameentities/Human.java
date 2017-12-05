@@ -5,6 +5,17 @@ public class Human extends Entity implements Mobile {
     static String symbol = "😀";
 
 
+    @Override
+    public double getStrength() {
+        return 10;
+    }
+
+    @Override
+    public double getAggressiveness() {
+        return 10;
+    }
+
+    @Override
     public String getSymbol() {
         return symbol;
     }

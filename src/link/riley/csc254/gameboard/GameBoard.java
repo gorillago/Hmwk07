@@ -3,6 +3,7 @@ package link.riley.csc254.gameboard;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -16,11 +17,11 @@ import link.riley.csc254.gameentities.Mobile;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameBoard extends Application{
     private static final int SCREEN_SIZE = 900;
     private static final int TILE_SIZE = 300;
-    private static final int TILES = SCREEN_SIZE/TILE_SIZE;
 
     private static final int maximumCellSlots = 3;
 
@@ -32,9 +33,20 @@ public class GameBoard extends Application{
     private Parent createContent() {
         board = new Cell[rows][columns];
         Pane root = new Pane();
-        root.setPrefSize(SCREEN_SIZE, SCREEN_SIZE);
+        root.setPrefSize(SCREEN_SIZE+200, SCREEN_SIZE);
 
+        Button roundButton = new Button("Round");
+        roundButton.setOnAction(e -> {
+            round();
+        });
 
+        roundButton.setTranslateX(900);
+        roundButton.setTranslateY(0);
+        roundButton.setPrefWidth(198);
+        roundButton.setPrefHeight(49);
+        roundButton.setFont(Font.font(30));
+
+        root.getChildren().add(roundButton);
 
         for (int x = 0; x < columns; x++) {
             for (int y = 0; y < rows; y++) {
@@ -71,6 +83,11 @@ public class GameBoard extends Application{
 
         return root;
     }
+    public void round() {
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < columns; j++)
+                board[i][j].round(i, j);
+    }
 
     public void launchGame(String[] args) {
         launch(args);
@@ -91,7 +108,7 @@ public class GameBoard extends Application{
         int x, y, slotNumber;
 
         public Slot(Entity entity, int x, int y, int slotNumber) {
-            this.rectangle = new Rectangle(TILE_SIZE-2, (TILE_SIZE/3)-2);
+            this.rectangle = new Rectangle(TILE_SIZE-2, (TILE_SIZE/maximumCellSlots)-2);
             rectangle.setFill(Color.WHITE);
             this.entity = entity;
             this.x = x;
@@ -104,9 +121,17 @@ public class GameBoard extends Application{
             getChildren().addAll(rectangle, text);
         }
 
+        public void kill() {
+            getChildren().removeAll(rectangle, text);
+        }
+
         public void updateSlot(int x, int y, int slotNumber) {
             setTranslateX(x*TILE_SIZE+.25);
             setTranslateY((y*TILE_SIZE)+((TILE_SIZE/maximumCellSlots)*slotNumber)+.25);
+        }
+
+        public void updateText() {
+            text.setText(entity.toString());
         }
 
         public Rectangle getRectangle() {
@@ -119,14 +144,14 @@ public class GameBoard extends Application{
 
     public class Cell extends StackPane {
         private int x, y;
-        ArrayList<Slot> slots;
+        CopyOnWriteArrayList<Slot> slots;
 
         private Rectangle border = new Rectangle(TILE_SIZE - 2, TILE_SIZE - 2);
 
         public Cell(int x, int y) {
             this.x = x;
             this.y = y;
-            slots = new ArrayList<>(maximumCellSlots);
+            slots = new CopyOnWriteArrayList<>();
 
             border.setStroke(Color.GREEN);
 
@@ -155,6 +180,11 @@ public class GameBoard extends Application{
         public void remove(Slot slot) {
             if (slots.contains(slot)) {
                 slots.remove(slot);
+                int i = 0;
+                for (Slot updateSlot : slots) {
+                    updateSlot.updateSlot(x, y, i);
+                    i++;
+                }
             }
         }
         void round(int startRow, int startColumn) {
@@ -170,15 +200,18 @@ public class GameBoard extends Application{
                     combat.attack(entity1, entity2);
                     entity2.subtractHealth(combat.damage);
                     String currentMessage = "\t" + combat.getMessage();
+                    slot.updateText();
                     if (entity2.getHealth() < .10) {
                         currentMessage += " and is killed";
-                        slots.remove(1);
+                        slots.get(1).kill();
+                        board[startRow][startColumn].remove(slots.get(1));
                     }
                     System.out.println(currentMessage);
                 }
 
                 //Now try to move the slot if it is mobile.
                 move(slot, startRow, startColumn);
+
             }
         }
 
