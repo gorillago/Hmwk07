@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -23,17 +24,18 @@ public class GameBoard extends Application{
     private static final int SCREEN_SIZE = 900;
     private static final int TILE_SIZE = 300;
 
-    private static final int maximumCellSlots = 3;
+    private static final int maximumCellSlots = 5;
 
     public static final int rows = 3;
     public static final int columns = 3;
 
+    public TextArea textArea = null;
     Cell[][] board;
 
     private Parent createContent() {
         board = new Cell[rows][columns];
         Pane root = new Pane();
-        root.setPrefSize(SCREEN_SIZE+200, SCREEN_SIZE);
+        root.setPrefSize(SCREEN_SIZE+600, SCREEN_SIZE);
 
         Button roundButton = new Button("Round");
         roundButton.setOnAction(e -> {
@@ -42,11 +44,18 @@ public class GameBoard extends Application{
 
         roundButton.setTranslateX(900);
         roundButton.setTranslateY(0);
-        roundButton.setPrefWidth(198);
+        roundButton.setPrefWidth(598);
         roundButton.setPrefHeight(49);
         roundButton.setFont(Font.font(30));
 
-        root.getChildren().add(roundButton);
+        textArea = new TextArea();
+        textArea.setTranslateX(900);
+        textArea.setTranslateY(70);
+        textArea.setPrefWidth(598);
+        textArea.setPrefHeight(400);
+        textArea.setEditable(false);
+
+        root.getChildren().addAll(roundButton, textArea);
 
         for (int x = 0; x < columns; x++) {
             for (int y = 0; y < rows; y++) {
@@ -195,7 +204,8 @@ public class GameBoard extends Application{
                 if (slots.size() > 1 && !slot.equals(slots.get(1))) {
                     Entity entity1 = slot.getEntity();
                     Entity entity2 = slots.get(1).getEntity();
-                    System.out.printf("%s attacks %s\n", entity1, entity2);
+                    //System.out.printf("%s attacks %s\n", entity1, entity2);
+                    textArea.appendText(String.format("%s attacks %s\n", entity1, entity2));
                     Attack combat = new Attack();
                     combat.attack(entity1, entity2);
                     entity2.subtractHealth(combat.damage);
@@ -206,7 +216,8 @@ public class GameBoard extends Application{
                         slots.get(1).kill();
                         board[startRow][startColumn].remove(slots.get(1));
                     }
-                    System.out.println(currentMessage);
+                    //System.out.println(currentMessage);
+                    textArea.appendText(currentMessage+"\n");
                 }
 
                 //Now try to move the slot if it is mobile.
